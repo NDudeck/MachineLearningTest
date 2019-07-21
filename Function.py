@@ -40,13 +40,13 @@ class Function:
         #builds the things we need to classify for fisher 2 class
         
         self.fish2_m = np.zeros((self.res,1));
-        for i in range(3,8):
+        for i in range(0,5):
             self.fish2_m[:,0] = self.fish2_m[:,0] + self.trainY[:,i];
             self.fish2_m = self.fish2_m/5
         
         self.fish2_Sw = np.zeros((self.res,self.res));
-        for i in range(3,8):
+        for i in range(0,5):
             self.fish2_Sw = self.fish2_Sw + \
-            np.matmul(self.trainY[:,i] - self.fish2_m[:,0], \
-            np.transpose(self.trainY[:,i] - self.fish2_m[:,0]))
+            np.matmul(self.trainY[:,i].reshape(self.res,1) - self.fish2_m[:,0], \
+            np.transpose(self.trainY[:,i].reshape(self.res,1) - self.fish2_m[:,0]))
         
