@@ -35,18 +35,25 @@ class Function:
             np.random.normal(0,0.25,(self.res,1)).reshape(self.res,);
         
     
-    def fish2class(self):
+    def fish_class(self):
         
         #builds the things we need to classify for fisher 2 class
         
-        self.fish2_m = np.zeros((self.res,1));
+        self.fish_m = np.zeros((self.res,1));
+        self.fish_m[:,0] = np.mean(self.trainY[:,0:5], axis=1);
+            
+        self.fish_Sw = np.zeros((self.res,self.res));
         for i in range(0,5):
-            self.fish2_m[:,0] = self.fish2_m[:,0] + self.trainY[:,i];
-            self.fish2_m = self.fish2_m/5
+            self.fish_Sw = self.fish_Sw + \
+            np.matmul(self.trainY[:,i].reshape(self.res,1) - self.fish_m[:,0], \
+            (self.trainY[:,i].reshape(self.res,1) - self.fish_m[:,0]).T)
         
-        self.fish2_Sw = np.zeros((self.res,self.res));
-        for i in range(0,5):
-            self.fish2_Sw = self.fish2_Sw + \
-            np.matmul(self.trainY[:,i].reshape(self.res,1) - self.fish2_m[:,0], \
-            np.transpose(self.trainY[:,i].reshape(self.res,1) - self.fish2_m[:,0]))
+    def fish_sb(self, m):
+        return 5*np.matmul((self.fish_m - m),(self.fish_m - m).T)
+    
+    def fish5class(self):
+        
+        self.fish_K = 5     #number of classes
+        self.fish_D = self.res   #number of dimensions
+        self.fish_Dprime = 3 #number of features
         
