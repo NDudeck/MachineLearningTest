@@ -19,22 +19,24 @@ class Function:
     
     trainX = np.linspace(interval[0],interval[1],res)
     
-    def __init__(self,equation):
+    def __init__(self,equation, data = None):
         
         #Any variable defined here will only be with one Function object
         self.equation = equation; #lambda function
         
-        #This function generates n evenly spaced points on the interval and 
-        #adds noise. The result is an nx10 matrix with each column as a set of
-        #data with increasing noise.
-    
-        self.trainY = np.zeros((self.res,10)).reshape(100,10); #Allocate
-        self.trainY[:,0] = self.equation(self.trainX);
-        for i in range(1,10):
-            self.trainY[:,i] = self.trainY[:,i-1] + \
-            np.random.normal(0,0.25,(self.res,1)).reshape(self.res,);
         
-    
+        if data == None:
+            #This function generates n evenly spaced points on the interval and 
+            #adds noise. The result is an nx10 matrix with each column as a set of
+            #data with increasing noise.
+        
+            self.trainY = np.zeros((self.res,10)).reshape(100,10); #Allocate
+            self.trainY[:,0] = self.equation(self.trainX);
+            for i in range(1,10):
+                self.trainY[:,i] = self.trainY[:,i-1] + \
+                np.random.normal(0,0.25,(self.res,1)).reshape(self.res,);
+        
+        
     def fish_class(self):
         
         #builds the things we need to classify for fisher 2 class

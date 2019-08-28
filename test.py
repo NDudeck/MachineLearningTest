@@ -39,8 +39,12 @@ def fish_classify_2_fn(data):
         return -np.matmul(np.matmul(w.T,fish2_Sb),w)/ \
                 (np.matmul(np.matmul(w.T,fish2_Sw),w))
     
-    grad = np.gradient(fish2_J)
-    res = sciop.minimize(fish2_J,np.ones((100,1)),jac = grad, \
+    def fish2_jac(w):
+        A = np.linalg.inv(np.matmul(np.matmul(w.T,fish2_Sw),w));
+        B = np.matmul(np.matmul(w.T,fish2_Sb),w)
+        return B*-1*A*2*np.matmul(fish2_Sw,w)*A + A*2*np.matmul(fish2_Sb,w);
+        
+    res = sciop.minimize(fish2_J,np.ones((100,1)),jac = fish2_jac, \
                          method = 'BFGS', \
                          options={'disp':True,'maxiter':25000}, tol=1e-10)
     
@@ -56,8 +60,8 @@ def fish_classify_2_fn(data):
     a = np.matmul(w_norm.T,data.reshape(100,1));
     return a;
 
-#data = fn2.trainY[:,1];
-#print(fish_classify_2_fn(data));
+data = fn2.trainY[:,1];
+print(fish_classify_2_fn(data));
 
 
 
@@ -121,14 +125,14 @@ def fish_classify_2_w(data1,data2):
     return w_norm;
 
 
-data1 = 
-data2 = 
-w = fish_classify_2_w(data1,data2);
-y1 = np.matmul(w.T,data1);
-y2 = np.matmul(w.T,data2);
-
-print(y1)
-print(y2)
+#data1 = 
+#data2 = 
+#w = fish_classify_2_w(data1,data2);
+#y1 = np.matmul(w.T,data1);
+#y2 = np.matmul(w.T,data2);
+#
+#print(y1)
+#print(y2)
     
     
     
