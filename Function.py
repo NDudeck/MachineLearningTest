@@ -16,6 +16,7 @@ class Function:
     #Any variable defined here will be shared by all Function objects
     interval = [0,3]  # 2x1 array 
     res = 100         # resolution of samples
+    sets = 10000;
     
     trainX = np.linspace(interval[0],interval[1],res)
     
@@ -30,11 +31,11 @@ class Function:
             #adds noise. The result is an nx10 matrix with each column as a set of
             #data with increasing noise.
         
-            self.trainY = np.zeros((self.res,10)).reshape(100,10); #Allocate
+            self.trainY = np.zeros((self.res,self.sets)).reshape(self.res,self.sets); #Allocate
             self.trainY[:,0] = self.equation(self.trainX);
-            for i in range(1,10):
-                self.trainY[:,i] = self.trainY[:,i-1] + \
-                np.random.normal(0,0.25,(self.res,1)).reshape(self.res,);
+            for i in range(1,self.sets):
+                self.trainY[:,i] = self.trainY[:,0] + \
+                np.random.normal(0,2,(self.res,1)).reshape(self.res,);
         
         
     def fish_class(self):
@@ -42,16 +43,16 @@ class Function:
         #builds the things we need to classify for fisher 2 class
         
         self.fish_m = np.zeros((self.res,1));
-        self.fish_m[:,0] = np.mean(self.trainY[:,0:5], axis=1);
+        self.fish_m[:,0] = np.mean(self.trainY[:,0:self.sets-1], axis=1);
             
         self.fish_Sw = np.zeros((self.res,self.res));
-        for i in range(0,5):
+        for i in range(0,self.sets):
             self.fish_Sw = self.fish_Sw + \
             np.matmul(self.trainY[:,i].reshape(self.res,1) - self.fish_m[:,0], \
             (self.trainY[:,i].reshape(self.res,1) - self.fish_m[:,0]).T)
         
     def fish_sb(self, m):
-        return 5*np.matmul((self.fish_m - m),(self.fish_m - m).T)
+        return self.sets*np.matmul((self.fish_m - m),(self.fish_m - m).T)
     
     def fish5class(self):
         

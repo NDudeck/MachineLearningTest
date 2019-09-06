@@ -10,6 +10,8 @@ import Function as F;
 import Word as W;
 import scipy.optimize as sciop
 import matplotlib.pyplot as plt #This plots stuff
+import thinkdsp;
+import random
 
 #Define functions as Function object
 fn1 = F.Function(lambda x: np.exp(x));
@@ -24,7 +26,13 @@ fn3.fish_class();
 fn4.fish_class();
 fn5.fish_class();
 
-def fish_classify_2_fn(data):  
+def fish_classify_2_fn():  
+    
+    global res;
+    global fish2_Sw;
+    global fish2_Sb;
+    global x0;
+    global fish2_J
     
     # Generate needed vars for 1of2 classify               
     fn1.fish_class();
@@ -42,9 +50,10 @@ def fish_classify_2_fn(data):
     def fish2_jac(w):
         A = 1/(np.matmul(np.matmul(w.T,fish2_Sw),w));
         B = np.matmul(np.matmul(w.T,fish2_Sb),w)
-        return B*-1*A*2*np.matmul(fish2_Sw,w)*A + A*2*np.matmul(fish2_Sb,w);
+        return B*1*A*2*np.matmul(fish2_Sw,w)*A + A*2*np.matmul(fish2_Sb,w);
         
-    res = sciop.minimize(fish2_J,np.ones((100,1)),jac = fish2_jac, \
+    x0 = [random.random() for _ in range(fn1.res)];
+    res = sciop.minimize(fish2_J,x0, \
                          method = 'BFGS', \
                          options={'disp':True,'maxiter':25000}, tol=1e-10)
     
@@ -53,15 +62,17 @@ def fish_classify_2_fn(data):
     w = w.reshape((fn1.res,1))
     w_norm = w/np.linalg.norm(w)
     
-#    w_prop = np.matmul(np.linalg.inv(Sw),(fn2.fish2_m - fn1.fish2_m))
-#    w_prop_norm = w_prop/np.linalg.norm(w_prop);
-#    print(w_prop_norm - w_norm)
+    w_prop = np.matmul(np.linalg.inv(fish2_Sw),(fn2.fish_m - fn1.fish_m))
+    w_prop_norm = w_prop/np.linalg.norm(w_prop);
+    print(w_prop_norm - w_norm)
     
-    a = np.matmul(w_norm.T,data.reshape(100,1));
-    return a;
+    return w_norm;
 
-#data = fn2.trainY[:,1];
-#print(fish_classify_2_fn(data));
+data1 = fn1.trainY[:,1];
+data2 = fn2.trainY[:,1];
+w = fish_classify_2_fn();
+print(np.matmul(w.T,data1));
+print(np.matmul(w.T,data2));
 
 
 
@@ -83,12 +94,12 @@ def fish_classify_5(data):
 
     res = sciop.minimize(fish5_J,w0,method = 'BFGS', options={'disp':True,'maxiter':250000}, tol=1e-100);
     print(res.x)
-    W = res.x.reshape(100,5)
+    W = res.x.reshape(100,5);
     return np.matmul(W.T,data);
  
     
-#data = fn1.trainY[:,6]
-#print(fish_classify_5(data));
+data = fn1.trainY[:,6]
+print(fish_classify_5(data));
     
 def sample(wave, factor):
     """Simulates sampling of a wave.
@@ -264,14 +275,14 @@ def fish_classify_2_w():
     return w_norm;
 
 
-data1 = 10000*Dog_Test_sampled
-data2 = 10000*Cat_Test_sampled
-w = fish_classify_2_w();
-y1 = np.matmul(w.T,data1);
-y2 = np.matmul(w.T,data2);
-
-print(y1)
-print(y2)
+#data1 = 10000*Dog_Test_sampled
+#data2 = 10000*Cat_Test_sampled
+#w = fish_classify_2_w();
+#y1 = np.matmul(w.T,data1);
+#y2 = np.matmul(w.T,data2);
+#
+#print(y1)
+#print(y2)
     
     
     

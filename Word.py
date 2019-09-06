@@ -14,8 +14,8 @@ import numpy as np; #This does some math stuff  easily
 class Word:
     
     #Any variable defined here will be shared by all Function objects
-    rate = 16000         # resolution of samples
-
+    rate = 4000;        # resolution of samples
+    sets = 1000;
     
     def __init__(self,data):
         
@@ -28,16 +28,16 @@ class Word:
         #builds the things we need to classify for fisher 2 class
         
         self.fish_m = np.zeros((self.rate,1));
-        self.fish_m[:,0] = np.mean(self.trainY[:,0:5], axis=1);
+        self.fish_m[:,0] = np.mean(self.trainY[:,0:self.sets-1], axis=1);
             
         self.fish_Sw = np.zeros((self.rate,self.rate));
-        for i in range(0,5):
+        for i in range(0,self.sets):
             self.fish_Sw = self.fish_Sw + \
             np.matmul(self.trainY[:,i].reshape(self.rate,1) - self.fish_m[:,0], \
             (self.trainY[:,i].reshape(self.rate,1) - self.fish_m[:,0]).T)
         
     def fish_sb(self, m):
-        return 5*np.matmul((self.fish_m - m),(self.fish_m - m).T)
+        return self.sets*np.matmul((self.fish_m - m),(self.fish_m - m).T)
     
 #    def fish5class(self):
 #        
