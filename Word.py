@@ -14,8 +14,8 @@ import numpy as np; #This does some math stuff  easily
 class Word:
     
     #Any variable defined here will be shared by all Function objects
-    rate = 4000;        # resolution of samples
-    sets = 1000;
+    rate = 1501;        # resolution of samples
+    sets = 1863;
     
     def __init__(self,data):
         
