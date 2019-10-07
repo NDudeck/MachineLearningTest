@@ -15,13 +15,15 @@ class Word:
     
     #Any variable defined here will be shared by all Function objects
     rate = 1501;        # resolution of samples
-    sets = 1863;
+    sets = 399;
     
     def __init__(self,data):
         
         #This function takes the input data and places it into the training matrix
         self.trainY = data;
         
+        self.fish_m = np.zeros((self.rate,1));
+        self.fish_m[:,0] = np.mean(self.trainY[:,0:self.sets-1], axis=1);
     
     def fish_class(self):
         
@@ -39,9 +41,24 @@ class Word:
     def fish_sb(self, m):
         return self.sets*np.matmul((self.fish_m - m),(self.fish_m - m).T)
     
-#    def fish5class(self):
-#        
-#        self.fish_K = 5     #number of classes
-#        self.fish_D = self.rate   #number of dimensions
-#        self.fish_Dprime = 3 #number of features
+    def fish_5class(self):
         
+        self.fish_K = 5     #number of classes
+        self.fish_D = self.rate   #number of dimensions
+        
+        self.fish_m = np.zeros((self.rate,1))
+        self.fish_m[:,0] = np.mean(self.trainY[:,0:self.sets-1], axis = 1)
+        
+        self.fish_Sw = np.zeros((self.rate,self.rate))
+        for i in range(0,self.sets):
+            self.fish_Sw = self.fish_Sw + \
+            np.matmul(self.trainY[:,i].reshape(self.rate,1) - self.fish_m[:,0], \
+            (self.trainY[:,i].reshape(self.rate,1) - self.fish_m[:,0]).T)
+            
+        
+        
+            
+            
+            
+            
+            

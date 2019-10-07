@@ -244,7 +244,7 @@ Stop_Test_files = sorted(glob.glob('Stop_Test*.wav'))
 Go_Test_files = sorted(glob.glob('Go_Test*.wav'))
 On_Test_files = sorted(glob.glob('On_Test*.wav'))
 
-n = 450
+n = 2000
 
 traindataC = np.empty((n,1501))
 traindataD = np.empty((n,1501))
@@ -354,15 +354,15 @@ for i in range(0,len(traindataO)):
     if max(traindataO[i]) < 1:
         traindataO = np.delete(traindataO, i, 0)
 
-while len(traindataC) > 400:
+while len(traindataC) > 2000:
     traindataC = np.delete(traindataC, [0], 0)
-while len(traindataD) > 400:        
+while len(traindataD) > 2000:        
     traindataD = np.delete(traindataD, [0], 0)
-while len(traindataG) > 400:
+while len(traindataG) > 2000:
     traindataG = np.delete(traindataG, [0], 0)
-while len(traindataO) > 400:
+while len(traindataO) > 2000:
     traindataO = np.delete(traindataO, [0], 0)
-while len(traindataS) > 400:
+while len(traindataS) > 2000:
     traindataS = np.delete(traindataS, [0], 0)
 #%%
 w1 = W.Word(traindataC.T)
@@ -384,18 +384,18 @@ def fish_classify_5_w():
     w5.fish_class()
 
     fish_mtotal = np.zeros((1501,1))
-    fish_mtotal = 1501*w1.fish_m + 1501*w2.fish_m + 1501*w3.fish_m + 1501*w4.fish_m + 1501*w5.fish_m
-    fish_mtotal = fish_mtotal/(1501*5)
+    fish_mtotal = w1.fish_m + w2.fish_m + w3.fish_m + w4.fish_m + w5.fish_m
+    fish_mtotal = fish_mtotal/(5)
     
     fish5_Sw = np.zeros((1501,1501))
     fish5_Sw = w1.fish_Sw + w2.fish_Sw + w3.fish_Sw + w4.fish_Sw + w5.fish_Sw
         
     fish5_Sb = np.zeros((1501,1501))
-    fish5_Sb = 1501*np.matmul((w1.fish_m - fish_mtotal),(w1.fish_m - fish_mtotal).T) + \
-               1501*np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) + \
-               1501*np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T) + \
-               1501*np.matmul((w4.fish_m - fish_mtotal),(w4.fish_m - fish_mtotal).T) + \
-               1501*np.matmul((w5.fish_m - fish_mtotal),(w5.fish_m - fish_mtotal).T)
+    fish5_Sb = np.matmul((w1.fish_m - fish_mtotal),(w1.fish_m - fish_mtotal).T) + \
+               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) + \
+               np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T) + \
+               np.matmul((w4.fish_m - fish_mtotal),(w4.fish_m - fish_mtotal).T) + \
+               np.matmul((w5.fish_m - fish_mtotal),(w5.fish_m - fish_mtotal).T)
         
     def fish5_J(w):
         w = w.reshape(1501,5);
@@ -403,13 +403,13 @@ def fish_classify_5_w():
                 np.matmul(w.T,fish5_Sw),w)), np.matmul(np.matmul(w.T,fish5_Sb),w)))
   
     def fish5_jac(w):
-        w = w.reshape(5,1501)
-        return (-(2*np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw,w.T),np.linalg.inv(np.matmul(np.matmul(w,fish5_Sw),w.T))),np.matmul(np.matmul(w,fish5_Sb),w.T)),np.matmul(np.matmul(w,fish5_Sw),w.T)) \
-                + 2*np.matmul(np.matmul(fish5_Sb,w.T),np.linalg.inv(np.matmul(np.matmul(w,fish5_Sw),w.T))))).reshape(7505,1)
+        w = w.reshape(1501,5)
+        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))),np.matmul(np.matmul(w.T,fish5_Sb),w)),np.matmul(np.matmul(w.T,fish5_Sw),w)) \
+                - 2*np.matmul(np.matmul(fish5_Sb,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))))).reshape(1,7505))
     
     w0 = np.linspace(1,100,7505)
     
-    res = sciop.minimize(fish5_J,w0,method = 'BFGS', options={'disp':True,'maxiter':250000}, tol=1e-100);
+    res = sciop.minimize(fish5_J,w0,method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
     print(res.x)
     w = res.x.reshape(1501,5)
     # Normalize W
