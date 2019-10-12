@@ -15,6 +15,8 @@ import thinkdsp
 import glob
 import scipy
 import scipy.stats
+import time
+
 
 #%%
 #Define functions as Function object
@@ -94,91 +96,158 @@ def fish_classify_5(data):
     W = res.x.reshape(100,5)
     return np.matmul(W.T,data);
  
-#%%    
-#data = fn1.trainY[:,6]
-#print(fish_classify_5(data));
-    
-def sample(wave, factor):
-    """Simulates sampling of a wave.
-    
-    wave: Wave object
-    factor: ratio of the new framerate to the original
-    """
-    ys = np.zeros(len(wave))
-    ys[::factor] = wave.ys[::factor]
-    return thinkdsp.Wave(ys, framerate=wave.framerate) 
+#%%
+start = time.time()
+### 5 CLASS DATA TESTS ###
+Go_files = sorted(glob.glob('Go_unedited*.wav'))
+On_files = sorted(glob.glob('On_unedited*.wav'))
+Right_files = sorted(glob.glob('Right_unedited*.wav'))
+Six_files = sorted(glob.glob('Six_unedited*.wav'))
+Stop_files = sorted(glob.glob('Stop_unedited*.wav'))
 
-Cat_files = sorted(glob.glob('Cat_unedited*.wav'))
-Dog_files = sorted(glob.glob('Dog_unedited*.wav'))
-Cat_Test_files = sorted(glob.glob('Cat_Test*.wav'))
-Dog_Test_files = sorted(glob.glob('Dog_Test*.wav'))
-#TAKE OUT CAT ((19), (190), (195), (257), (268), (430), (471), (488), (792), (798), (799), (896)
-#(1078) (1497), (1808), (1856), (1867), (1900), (1901)
+n = 3200
 
-#Cat_remove = [19,190,195,257,268,430,471,488,792,798,799,896, 1078, 1497, 1808, 1856, 1867, 1900, 1901]
-#for i in range(0, len(Cat_remove)):
-    #Cat_files = Cat_files.remove("Cat_unedited ("Cat_remove[i]").wav")
-#TAKE OUT DOG (133), (235), (306), (457), (458), (466), (512), (513), (522), (632), (706)
-#(811), (839), (1097), (1098), (1203), (1269), (1539), (1574)
-#Dog_remove = [133, 235, 306, 457, 458, 512, 522, 632, 706, 811, 839, 1097, 1098, 1203, 1269, 1539, 1574]
-j = np.empty((5, 4000))
-traindataC = np.empty((2001,1501))
-traindataD = np.empty((2001,1501))
-Cat_Test = np.empty((len(Cat_Test_files), 1501))
-Dog_Test = np.empty((8, 1501))
-y1 = np.empty((8,1))
-y2 = np.empty((len(Cat_Test_files),1))
+traindataGo = np.empty((n,1501))
+traindataOn = np.empty((n,1501))
+traindataRight = np.empty((n,1501))
+traindataSix = np.empty((n,1501))
+traindataStop = np.empty((n,1501))
 
-#####SPECTRUM ANALYSIS###
+Go_Test = np.empty((100,1501))
+On_Test = np.empty((100,1501))
+Right_Test = np.empty((100,1501))
+Six_Test = np.empty((100,1501))
+Stop_Test = np.empty((100,1501))
 
-for i in range(0, len(traindataC)):
-    wave = thinkdsp.read_wave(Cat_files[i])
-    spectrum = wave.make_spectrum(Cat_files[i])
+for i in range(0, n):
+    wave = thinkdsp.read_wave(Go_files[i])
+    spectrum = wave.make_spectrum(Go_files[i])
     spectrum.low_pass(1500)
     a = spectrum.render_full()
     b = a[1]
-    traindataC[i] = b[8000:9501]
+    traindataGo[i] = b[8000:9501]
     
-for i in range(0, len(traindataD)):
-    wave = thinkdsp.read_wave(Dog_files[i])
-    spectrum = wave.make_spectrum(Dog_files[i])
+for i in range(0, n):
+    wave = thinkdsp.read_wave(On_files[i])
+    spectrum = wave.make_spectrum(On_files[i])
     spectrum.low_pass(1500)
     a = spectrum.render_full()
     b = a[1]
-    traindataD[i] = b[8000:9501]
+    traindataOn[i] = b[8000:9501]
 
-
-for i in range(0, 8):
-    wave = thinkdsp.read_wave(Dog_Test_files[i])
-    spectrum = wave.make_spectrum(Dog_Test_files[i])
+for i in range(0, n):
+    wave = thinkdsp.read_wave(Right_files[i])
+    spectrum = wave.make_spectrum(Right_files[i])
     spectrum.low_pass(1500)
     a = spectrum.render_full()
     b = a[1]
-    Dog_Test[i] = b[8000:9501]
+    traindataRight[i] = b[8000:9501]
     
-for i in range(0, len(Cat_Test_files)):
-    wave = thinkdsp.read_wave(Cat_Test_files[i])
-    spectrum = wave.make_spectrum(Cat_Test_files[i])
+for i in range(0, n):
+    wave = thinkdsp.read_wave(Six_files[i])
+    spectrum = wave.make_spectrum(Six_files[i])
     spectrum.low_pass(1500)
     a = spectrum.render_full()
     b = a[1]
-    Cat_Test[i] = b[8000:9501]
+    traindataSix[i] = b[8000:9501]
     
+for i in range(0, n):
+    wave = thinkdsp.read_wave(Stop_files[i])
+    spectrum = wave.make_spectrum(Stop_files[i])
+    spectrum.low_pass(1500)
+    a = spectrum.render_full()
+    b = a[1]
+    traindataStop[i] = b[8000:9501]
+    
+for i in range(3300, 3400):
+    wave = thinkdsp.read_wave(Go_files[i])
+    spectrum = wave.make_spectrum(Go_files[i])
+    spectrum.low_pass(1500)
+    a = spectrum.render_full()
+    b = a[1]
+    Go_Test[i-3300] = b[8000:9501]
+    
+for i in range(3300, 3400):
+    wave = thinkdsp.read_wave(On_files[i])
+    spectrum = wave.make_spectrum(On_files[i])
+    spectrum.low_pass(1500)
+    a = spectrum.render_full()
+    b = a[1]
+    On_Test[i-3300] = b[8000:9501]
+    
+for i in range(3300, 3400):
+    wave = thinkdsp.read_wave(Right_files[i])
+    spectrum = wave.make_spectrum(Right_files[i])
+    spectrum.low_pass(1500)
+    a = spectrum.render_full()
+    b = a[1]
+    Right_Test[i-3300] = b[8000:9501]
+    
+for i in range(3300, 3400):
+    wave = thinkdsp.read_wave(Six_files[i])
+    spectrum = wave.make_spectrum(Six_files[i])
+    spectrum.low_pass(1500)
+    a = spectrum.render_full()
+    b = a[1]
+    Six_Test[i-3300] = b[8000:9501]
+    
+for i in range(3300, 3400):
+    wave = thinkdsp.read_wave(Stop_files[i])
+    spectrum = wave.make_spectrum(Stop_files[i])
+    spectrum.low_pass(1500)
+    a = spectrum.render_full()
+    b = a[1]
+    Stop_Test[i-3300] = b[8000:9501]
 
-for i in range(0,len(traindataC)):
-        if max(traindataC[i]) < 1:
-            traindataC = np.delete(traindataC, i, 0)
+while len(traindataGo) > 3000:
+    traindataGo = np.delete(traindataGo, [0], 0)
+while len(traindataOn) > 3000:        
+    traindataOn = np.delete(traindataOn, [0], 0)
+while len(traindataRight) > 3000:
+    traindataRight = np.delete(traindataRight, [0], 0)
+while len(traindataSix) > 3000:
+    traindataSix = np.delete(traindataSix, [0], 0)
+while len(traindataStop) > 3000:
+    traindataStop = np.delete(traindataStop, [0], 0)
+    
+for i in range(0,3000):
+    for j in range(0,1501):
+        if traindataGo[i,j] > 1000:
+            traindataGo[i,j] = 0 
+    
+for i in range(0,3000):
+    for j in range(0,1501):
+        if traindataOn[i,j] > 1000:
+            traindataOn[i,j] = 0 
             
-for i in range(0,len(traindataD)):
-        if max(traindataD[i]) < 1:
-            traindataD = np.delete(traindataD, i, 0)
-
-traindataD = np.delete(traindataD, [0], 0)
+for i in range(0,3000):
+    for j in range(0,1501):
+        if traindataRight[i,j] > 1000:
+            traindataRight[i,j] = 0 
             
-w1 = W.Word(traindataC.T);
-w2 = W.Word(traindataD.T);
+for i in range(0,3000):
+    for j in range(0,1501):
+        if traindataSix[i,j] > 1000:
+            traindataSix[i,j] = 0 
+            
+for i in range(0,3000):
+    for j in range(0,1501):
+        if traindataStop[i,j] > 1000:
+            traindataStop[i,j] = 0 
     
+elapsed_time_DataMaking = (time.time() - start)
+    
+            
+#%%
+    
+start = time.time()
 
+w1 = W.Word(traindataGo.T);
+w2 = W.Word(traindataRight.T);
+    
+Y = np.zeros((5,100))
+
+X = np.zeros((500,1501))
 
 def fish_classify_2_w():  
     
@@ -222,218 +291,89 @@ def fish_classify_2_w():
 
 
 w = fish_classify_2_w();
-for i in range(0, 8):
-    y1[i] = np.matmul(w.T,Dog_Test[i]);
-    y2[i] = np.matmul(w.T,Cat_Test[i]);
 
-print(y1)
-print(y2)
+for i in range(0, 100):
+    X[i] = Go_Test[i]
+    X[i+100] = On_Test[i]
+    X[i+200] = Right_Test[i]
+    X[i+300] = Six_Test[i]
+    X[i+400] = Stop_Test[i]
+    
+Y = np.matmul(w.T,X.T)
+
+elapsed_time_fish2 = (time.time() - start)
 
 #%%
 
-### 5 CLASS DATA TESTS ###
-Cat_files = sorted(glob.glob('Cat_unedited*.wav'))
-Dog_files = sorted(glob.glob('Dog_unedited*.wav'))
-Stop_files = sorted(glob.glob('Stop_unedited*.wav'))
-Go_files = sorted(glob.glob('Go_unedited*.wav'))
-On_files = sorted(glob.glob('On_unedited*.wav'))
+start = time.time()
 
-Cat_Test_files = sorted(glob.glob('Cat_Test*.wav'))
-Dog_Test_files = sorted(glob.glob('Dog_Test*.wav'))
-Stop_Test_files = sorted(glob.glob('Stop_Test*.wav'))
-Go_Test_files = sorted(glob.glob('Go_Test*.wav'))
-On_Test_files = sorted(glob.glob('On_Test*.wav'))
+K = 2
 
-n = 2000
+w1 = W.Word(traindataGo.T)
+w3 = W.Word(traindataOn.T)
+w2 = W.Word(traindataRight.T)
+w4 = W.Word(traindataSix.T)
+w5 = W.Word(traindataStop.T)
 
-traindataC = np.empty((n,1501))
-traindataD = np.empty((n,1501))
-traindataS = np.empty((n,1501))
-traindataG = np.empty((n,1501))
-traindataO = np.empty((n,1501))
+Y = np.zeros((5,100))
 
-Cat_Test = np.empty((8,1501))
-Dog_Test = np.empty((8,1501))
-Stop_Test = np.empty((8,1501))
-Go_Test = np.empty((8,1501))
-On_Test = np.empty((8,1501))
-
-for i in range(0, n):
-    wave = thinkdsp.read_wave(Cat_files[i])
-    spectrum = wave.make_spectrum(Cat_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    traindataC[i] = b[8000:9501]
-    
-for i in range(0, n):
-    wave = thinkdsp.read_wave(Dog_files[i])
-    spectrum = wave.make_spectrum(Dog_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    traindataD[i] = b[8000:9501]
-
-for i in range(0, n):
-    wave = thinkdsp.read_wave(Stop_files[i])
-    spectrum = wave.make_spectrum(Stop_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    traindataS[i] = b[8000:9501]
-    
-for i in range(0, n):
-    wave = thinkdsp.read_wave(Go_files[i])
-    spectrum = wave.make_spectrum(Go_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    traindataG[i] = b[8000:9501]
-    
-for i in range(0, n):
-    wave = thinkdsp.read_wave(On_files[i])
-    spectrum = wave.make_spectrum(On_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    traindataO[i] = b[8000:9501]
-    
-for i in range(0, 8):
-    wave = thinkdsp.read_wave(Dog_Test_files[i])
-    spectrum = wave.make_spectrum(Dog_Test_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    Dog_Test[i] = b[8000:9501]
-    
-for i in range(0, 8):
-    wave = thinkdsp.read_wave(Cat_Test_files[i])
-    spectrum = wave.make_spectrum(Cat_Test_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    Cat_Test[i] = b[8000:9501]
-    
-for i in range(0, 8):
-    wave = thinkdsp.read_wave(Stop_Test_files[i])
-    spectrum = wave.make_spectrum(Stop_Test_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    Stop_Test[i] = b[8000:9501]
-    
-for i in range(0, 8):
-    wave = thinkdsp.read_wave(Go_Test_files[i])
-    spectrum = wave.make_spectrum(Go_Test_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    Go_Test[i] = b[8000:9501]
-    
-for i in range(0, 8):
-    wave = thinkdsp.read_wave(On_Test_files[i])
-    spectrum = wave.make_spectrum(On_Test_files[i])
-    spectrum.low_pass(1500)
-    a = spectrum.render_full()
-    b = a[1]
-    On_Test[i] = b[8000:9501]
-    
-for i in range(0,len(traindataC)):
-    if max(traindataC[i]) < 1:
-        traindataC = np.delete(traindataC, i, 0)
-for i in range(0,len(traindataD)):
-    if max(traindataD[i]) < 1:
-        traindataD = np.delete(traindataD, i, 0)
-for i in range(0,len(traindataS)):
-    if max(traindataS[i]) < 1:
-        traindataS = np.delete(traindataS, i, 0)
-for i in range(0,len(traindataG)):    
-    if max(traindataG[i]) < 1:
-        traindataG = np.delete(traindataG, i, 0)
-for i in range(0,len(traindataO)):    
-    if max(traindataO[i]) < 1:
-        traindataO = np.delete(traindataO, i, 0)
-
-while len(traindataC) > 2000:
-    traindataC = np.delete(traindataC, [0], 0)
-while len(traindataD) > 2000:        
-    traindataD = np.delete(traindataD, [0], 0)
-while len(traindataG) > 2000:
-    traindataG = np.delete(traindataG, [0], 0)
-while len(traindataO) > 2000:
-    traindataO = np.delete(traindataO, [0], 0)
-while len(traindataS) > 2000:
-    traindataS = np.delete(traindataS, [0], 0)
-#%%
-w1 = W.Word(traindataC.T)
-w2 = W.Word(traindataD.T)
-w3 = W.Word(traindataS.T)
-w4 = W.Word(traindataG.T)
-w5 = W.Word(traindataO.T)
-
-Y = np.zeros((5,40))
-
-X = np.zeros((45,1501))
+X = np.zeros((500,1501))
 
 def fish_classify_5_w():
     
     w1.fish_class()
     w2.fish_class()
-    w3.fish_class()
-    w4.fish_class()
-    w5.fish_class()
+    #w3.fish_class()
+    #w4.fish_class()
+    #w5.fish_class()
 
     fish_mtotal = np.zeros((1501,1))
-    fish_mtotal = w1.fish_m + w2.fish_m + w3.fish_m + w4.fish_m + w5.fish_m
-    fish_mtotal = fish_mtotal/(5)
+    fish_mtotal = w1.fish_m + w2.fish_m #+ w3.fish_m + w4.fish_m + w5.fish_m
+    fish_mtotal = fish_mtotal/(K)
     
     fish5_Sw = np.zeros((1501,1501))
-    fish5_Sw = w1.fish_Sw + w2.fish_Sw + w3.fish_Sw + w4.fish_Sw + w5.fish_Sw
+    fish5_Sw = w1.fish_Sw + w2.fish_Sw #+ w3.fish_Sw + w4.fish_Sw + w5.fish_Sw
         
     fish5_Sb = np.zeros((1501,1501))
     fish5_Sb = np.matmul((w1.fish_m - fish_mtotal),(w1.fish_m - fish_mtotal).T) + \
-               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) + \
-               np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T) + \
-               np.matmul((w4.fish_m - fish_mtotal),(w4.fish_m - fish_mtotal).T) + \
-               np.matmul((w5.fish_m - fish_mtotal),(w5.fish_m - fish_mtotal).T)
+               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) #+ \
+#               np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T) + \
+#               np.matmul((w4.fish_m - fish_mtotal),(w4.fish_m - fish_mtotal).T) + \
+#               np.matmul((w5.fish_m - fish_mtotal),(w5.fish_m - fish_mtotal).T)
         
     def fish5_J(w):
-        w = w.reshape(1501,5);
+        w = w.reshape(1501,K);
         return -np.trace(np.matmul(np.linalg.inv(np.matmul(\
-                np.matmul(w.T,fish5_Sw),w)), np.matmul(np.matmul(w.T,fish5_Sb),w)))
+                np.matmul(w.T,fish5_Sw/100000),w)), np.matmul(np.matmul(w.T,fish5_Sb/100000),w)))
   
     def fish5_jac(w):
-        w = w.reshape(1501,5)
-        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))),np.matmul(np.matmul(w.T,fish5_Sb),w)),np.matmul(np.matmul(w.T,fish5_Sw),w)) \
-                - 2*np.matmul(np.matmul(fish5_Sb,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))))).reshape(1,7505))
+        w = w.reshape(1501,K)
+        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw/100000,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw/100000),w))),np.matmul(np.matmul(w.T,fish5_Sb/100000),w)),np.matmul(np.matmul(w.T,fish5_Sw/100000),w)) \
+                - 2*np.matmul(np.matmul(fish5_Sb/100000,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw/100000),w))))).reshape(1,K*1501))
     
-    w0 = np.linspace(1,100,7505)
+    w0 = np.linspace(1,100,K*1501)
     
-    res = sciop.minimize(fish5_J,w0,method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
+    res = sciop.minimize(fish5_J,np.random.rand(K*1501,1),method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
     print(res.x)
-    w = res.x.reshape(1501,5)
+    w = res.x.reshape(1501,K)
     # Normalize W
     w = res.x;
-    w = w.reshape((w1.rate,5))
+    w = w.reshape((w1.rate,K))
     w_norm = w/np.linalg.norm(w)
     return w_norm;
     
 w = fish_classify_5_w();
 
-for i in range(0, 8):
-    X[i] = Cat_Test[i]
-    X[i+9] = Dog_Test[i]
-    X[i+18] = Go_Test[i]
-    X[i+27] = On_Test[i]
-    X[i+36] = Stop_Test[i]
+for i in range(0, 100):
+    X[i] = Go_Test[i]
+    X[i+100] = On_Test[i]
+    X[i+200] = Right_Test[i]
+    X[i+300] = Six_Test[i]
+    X[i+400] = Stop_Test[i]
     
 Y = np.matmul(w.T,X.T)
         
-
-    
-    
-    
-    
+elapsed_time_fish5 = (time.time() - start)
     
     
     
