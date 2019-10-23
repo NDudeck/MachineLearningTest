@@ -99,11 +99,11 @@ def fish_classify_5(data):
 #%%
 start = time.time()
 ### 5 CLASS DATA TESTS ###
-Go_files = sorted(glob.glob('Go_unedited*.wav'))
-On_files = sorted(glob.glob('On_unedited*.wav'))
-Right_files = sorted(glob.glob('Right_unedited*.wav'))
-Six_files = sorted(glob.glob('Six_unedited*.wav'))
-Stop_files = sorted(glob.glob('Stop_unedited*.wav'))
+Go_files = sorted(glob.glob('Go**/*.wav'))
+On_files = sorted(glob.glob('On**/*.wav'))
+Right_files = sorted(glob.glob('Right**/*.wav'))
+Six_files = sorted(glob.glob('Six**/*.wav'))
+Stop_files = sorted(glob.glob('Stop**/*.wav'))
 
 n = 3200
 
@@ -236,14 +236,27 @@ for i in range(0,3000):
             traindataStop[i,j] = 0 
     
 elapsed_time_DataMaking = (time.time() - start)
+
+w1 = W.Word(traindataGo.T)
+w2 = W.Word(traindataOn.T)
+w3 = W.Word(traindataRight.T)
+w4 = W.Word(traindataSix.T)
+w5 = W.Word(traindataStop.T)
     
+w1.fish_class()
+w2.fish_class()
+w3.fish_class()
+w4.fish_class()
+w5.fish_class()
+    
+elapsed_time_Classes = (time.time() - start) - elapsed_time_DataMaking
             
 #%%
     
 start = time.time()
 
 w1 = W.Word(traindataGo.T);
-w2 = W.Word(traindataRight.T);
+w2 = W.Word(traindataOn.T);
     
 Y = np.zeros((5,100))
 
@@ -273,11 +286,11 @@ def fish_classify_2_w():
     def fish2_jac(w):
         A = np.matmul(np.matmul(w.T,fish2_Sw),w);
         B = np.matmul(np.matmul(w.T,fish2_Sb),w)
-        return (2*B*np.matmul(fish2_Sb,w) - 2*B*np.matmul(fish2_Sw,w))/(A*A);
+        return -(A*2*np.matmul(fish2_Sb,w) - B*2*np.matmul(fish2_Sw,w))/(A*A)
     
-    res = sciop.minimize(fish2_J,np.ones((w1.rate,1)), jac = fish2_jac, \
+    res = sciop.minimize(fish2_J,np.random.rand(1501,1), jac = fish2_jac, \
                          options={'disp':True,'maxiter':25000}, tol=1e-10000)
-    
+    print(res)
     # Normalize W
     w = res.x;
     w = w.reshape((w1.rate,1))
@@ -307,62 +320,156 @@ elapsed_time_fish2 = (time.time() - start)
 
 start = time.time()
 
-K = 2
-
-w1 = W.Word(traindataGo.T)
-w3 = W.Word(traindataOn.T)
-w2 = W.Word(traindataRight.T)
-w4 = W.Word(traindataSix.T)
-w5 = W.Word(traindataStop.T)
-
 Y = np.zeros((5,100))
 
 X = np.zeros((500,1501))
 
-def fish_classify_5_w():
-    
-    w1.fish_class()
-    w2.fish_class()
-    #w3.fish_class()
-    #w4.fish_class()
-    #w5.fish_class()
+# 2 Class #
+
+def fish_classify_5_2w():
 
     fish_mtotal = np.zeros((1501,1))
-    fish_mtotal = w1.fish_m + w2.fish_m #+ w3.fish_m + w4.fish_m + w5.fish_m
-    fish_mtotal = fish_mtotal/(K)
+    fish_mtotal = w1.fish_m + w2.fish_m 
+    fish_mtotal = fish_mtotal/(2)
     
     fish5_Sw = np.zeros((1501,1501))
-    fish5_Sw = w1.fish_Sw + w2.fish_Sw #+ w3.fish_Sw + w4.fish_Sw + w5.fish_Sw
+    fish5_Sw = w1.fish_Sw + w2.fish_Sw
         
     fish5_Sb = np.zeros((1501,1501))
     fish5_Sb = np.matmul((w1.fish_m - fish_mtotal),(w1.fish_m - fish_mtotal).T) + \
-               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) #+ \
-#               np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T) + \
-#               np.matmul((w4.fish_m - fish_mtotal),(w4.fish_m - fish_mtotal).T) + \
-#               np.matmul((w5.fish_m - fish_mtotal),(w5.fish_m - fish_mtotal).T)
+               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T)
         
     def fish5_J(w):
-        w = w.reshape(1501,K);
+        w = w.reshape(1501,2);
         return -np.trace(np.matmul(np.linalg.inv(np.matmul(\
-                np.matmul(w.T,fish5_Sw/100000),w)), np.matmul(np.matmul(w.T,fish5_Sb/100000),w)))
+                np.matmul(w.T,fish5_Sw),w)), np.matmul(np.matmul(w.T,fish5_Sb),w)))
   
     def fish5_jac(w):
-        w = w.reshape(1501,K)
-        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw/100000,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw/100000),w))),np.matmul(np.matmul(w.T,fish5_Sb/100000),w)),np.matmul(np.matmul(w.T,fish5_Sw/100000),w)) \
-                - 2*np.matmul(np.matmul(fish5_Sb/100000,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw/100000),w))))).reshape(1,K*1501))
-    
-    w0 = np.linspace(1,100,K*1501)
-    
-    res = sciop.minimize(fish5_J,np.random.rand(K*1501,1),method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
-    print(res.x)
-    w = res.x.reshape(1501,K)
+        w = w.reshape(1501,2)
+        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))),w.T),fish5_Sb),w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))) \
+                - 2*np.matmul(np.matmul(fish5_Sb,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))))).reshape(1,2*1501))
+        
+    res = sciop.minimize(fish5_J,np.random.rand(2*1501,1),method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
+    print(res)
+    w = res.x.reshape(1501,2)
     # Normalize W
     w = res.x;
-    w = w.reshape((w1.rate,K))
+    w = w.reshape((w1.rate,2))
+    w_norm = w/np.linalg.norm(w)
+    return w_norm;
+
+# 3 Class #
+    
+def fish_classify_5_3w():
+
+    fish_mtotal = np.zeros((1501,1))
+    fish_mtotal = w1.fish_m + w2.fish_m + w3.fish_m 
+    fish_mtotal = fish_mtotal/(3)
+    
+    fish5_Sw = np.zeros((1501,1501))
+    fish5_Sw = w1.fish_Sw + w2.fish_Sw + w3.fish_Sw
+        
+    fish5_Sb = np.zeros((1501,1501))
+    fish5_Sb = np.matmul((w1.fish_m - fish_mtotal),(w1.fish_m - fish_mtotal).T) + \
+               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) + \
+               np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T)
+        
+    def fish5_J(w):
+        w = w.reshape(1501,3);
+        return -np.trace(np.matmul(np.linalg.inv(np.matmul(\
+                np.matmul(w.T,fish5_Sw),w)), np.matmul(np.matmul(w.T,fish5_Sb),w)))
+  
+    def fish5_jac(w):
+        w = w.reshape(1501,3)
+        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))),w.T),fish5_Sb),w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))) \
+                - 2*np.matmul(np.matmul(fish5_Sb,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))))).reshape(1,3*1501))
+        
+    res = sciop.minimize(fish5_J,np.random.rand(3*1501,1),method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
+    print(res)
+    w = res.x.reshape(1501,3)
+    # Normalize W
+    w = res.x;
+    w = w.reshape((w1.rate,3))
+    w_norm = w/np.linalg.norm(w)
+    return w_norm;
+
+# 4 Class #
+    
+def fish_classify_5_4w():
+    
+    fish_mtotal = np.zeros((1501,1))
+    fish_mtotal = w1.fish_m + w2.fish_m + w3.fish_m + w4.fish_m
+    fish_mtotal = fish_mtotal/(4)
+    
+    fish5_Sw = np.zeros((1501,1501))
+    fish5_Sw = w1.fish_Sw + w2.fish_Sw + w3.fish_Sw + w4.fish_Sw
+        
+    fish5_Sb = np.zeros((1501,1501))
+    fish5_Sb = np.matmul((w1.fish_m - fish_mtotal),(w1.fish_m - fish_mtotal).T) + \
+               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) + \
+               np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T) + \
+               np.matmul((w4.fish_m - fish_mtotal),(w4.fish_m - fish_mtotal).T)
+        
+    def fish5_J(w):
+        w = w.reshape(1501,4);
+        return -np.trace(np.matmul(np.linalg.inv(np.matmul(\
+                np.matmul(w.T,fish5_Sw),w)), np.matmul(np.matmul(w.T,fish5_Sb),w)))
+  
+    def fish5_jac(w):
+        w = w.reshape(1501,4)
+        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))),w.T),fish5_Sb),w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))) \
+                - 2*np.matmul(np.matmul(fish5_Sb,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))))).reshape(1,4*1501))
+        
+    res = sciop.minimize(fish5_J,np.random.rand(4*1501,1),method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
+    print(res)
+    w = res.x.reshape(1501,4)
+    # Normalize W
+    w = res.x;
+    w = w.reshape((w1.rate,4))
+    w_norm = w/np.linalg.norm(w)
+    return w_norm;
+
+# 5 Class #
+    
+def fish_classify_5_5w():
+
+    fish_mtotal = np.zeros((1501,1))
+    fish_mtotal = w1.fish_m + w2.fish_m + w3.fish_m + w4.fish_m + w5.fish_m
+    fish_mtotal = fish_mtotal/(5)
+    
+    fish5_Sw = np.zeros((1501,1501))
+    fish5_Sw = w1.fish_Sw + w2.fish_Sw + w3.fish_Sw + w4.fish_Sw + w5.fish_Sw
+        
+    fish5_Sb = np.zeros((1501,1501))
+    fish5_Sb = np.matmul((w1.fish_m - fish_mtotal),(w1.fish_m - fish_mtotal).T) + \
+               np.matmul((w2.fish_m - fish_mtotal),(w2.fish_m - fish_mtotal).T) + \
+               np.matmul((w3.fish_m - fish_mtotal),(w3.fish_m - fish_mtotal).T) + \
+               np.matmul((w4.fish_m - fish_mtotal),(w4.fish_m - fish_mtotal).T) + \
+               np.matmul((w5.fish_m - fish_mtotal),(w5.fish_m - fish_mtotal).T)
+        
+    def fish5_J(w):
+        w = w.reshape(1501,5);
+        return -np.trace(np.matmul(np.linalg.inv(np.matmul(\
+                np.matmul(w.T,fish5_Sw),w)), np.matmul(np.matmul(w.T,fish5_Sb),w)))
+  
+    def fish5_jac(w):
+        w = w.reshape(1501,5)
+        return np.squeeze(((2*np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(np.matmul(fish5_Sw,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))),w.T),fish5_Sb),w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))) \
+                - 2*np.matmul(np.matmul(fish5_Sb,w),np.linalg.inv(np.matmul(np.matmul(w.T,fish5_Sw),w))))).reshape(1,5*1501))
+        
+    res = sciop.minimize(fish5_J,np.random.rand(5*1501,1),method = 'BFGS', jac = fish5_jac,options={'disp':True,'maxiter':250000}, tol=1e-100);
+    print(res)
+    w = res.x.reshape(1501,5)
+    # Normalize W
+    w = res.x;
+    w = w.reshape((w1.rate,5))
     w_norm = w/np.linalg.norm(w)
     return w_norm;
     
-w = fish_classify_5_w();
+fish21 = fish_classify_5_2w();
+#fish3 = fish_classify_5_3w();
+#fish4 = fish_classify_5_4w();
+#fish5 = fish_classify_5_5w();
 
 for i in range(0, 100):
     X[i] = Go_Test[i]
@@ -371,11 +478,25 @@ for i in range(0, 100):
     X[i+300] = Six_Test[i]
     X[i+400] = Stop_Test[i]
     
-Y = np.matmul(w.T,X.T)
+Y21 = np.matmul(fish21.T,X.T)
+#Y3 = np.matmul(fish3.T,X.T)
+#Y4 = np.matmul(fish4.T,X.T)
+#Y5 = np.matmul(fish5.T,X.T)
+
         
 elapsed_time_fish5 = (time.time() - start)
     
-    
+#%%
+Z2 = np.zeros((2,500))
+Z3 = np.zeros((3,500))
+Z4 = np.zeros((4,500))
+Z5 = np.zeros((5,500))
+
+Z2.T[np.arange(len(Y2.T)),Y2.T.argmax(1)] = 1
+Z3.T[np.arange(len(Y3.T)),Y3.T.argmax(1)] = 1
+Z4.T[np.arange(len(Y4.T)),Y4.T.argmax(1)] = 1
+Z5.T[np.arange(len(Y5.T)),Y5.T.argmax(1)] = 1
+
     
     
     
